@@ -115,6 +115,6 @@ def chat(message, history):
     return response.choices[0].message.content
 
 ######################################Gemini Evaluator#########################################
-chat("Hello, can you tell me about your background?", [])
+# chat("Hello, can you tell me about your background?", [])
 
-# gr.ChatInterface(chat, type="messages").queue().launch()
+gr.ChatInterface(chat, type="messages").queue().launch()
