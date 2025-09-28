@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Recruitment Assistant</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-robot"></i> AI Recruitment Assistant</h1>
+            <p>Practice interviews and get ATS insights with AI-powered assistance</p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Left Panel -->
+            <div class="left-panel">
+                <!-- Mode Selection -->
+                <div class="card">
+                    <h3><i class="fas fa-user-cog"></i> Select Mode</h3>
+                    <div class="mode-selector">
+                        <div class="mode-option active" data-mode="job_seeker">
+                            <input type="radio" name="mode" value="job_seeker" checked>
+                            <div class="mode-info">
+                                <h4><i class="fas fa-user-tie"></i> Job Seeker</h4>
+                                <p>You are the candidate - AI will interview you</p>
+                            </div>
+                        </div>
+                        <div class="mode-option" data-mode="hr_recruiter">
+                            <input type="radio" name="mode" value="hr_recruiter">
+                            <div class="mode-info">
+                                <h4><i class="fas fa-user-check"></i> HR Recruiter</h4>
+                                <p>You are the interviewer - AI acts as candidate</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Document Upload -->
+                <div class="card">
+                    <h3><i class="fas fa-file-upload"></i> Upload Documents</h3>
+                    
+                    <!-- Resume Upload -->
+                    <div class="form-group">
+                        <label>Resume (PDF)</label>
+                        <div class="file-upload-area" id="resumeUpload">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Drop your resume here or click to upload</p>
+                            <span>PDF files only</span>
+                        </div>
+                        <input type="file" id="resumeFile" accept=".pdf">
+                        <div id="resumeStatus"></div>
+                    </div>
+
+                    <!-- Cover Letter Upload -->
+                    <div class="form-group">
+                        <label>Cover Letter (PDF, Optional)</label>
+                        <div class="file-upload-area" id="coverLetterUpload">
+                            <i class="fas fa-file-alt"></i>
+                            <p>Drop cover letter here or click to upload</p>
+                            <span>PDF files only</span>
+                        </div>
+                        <input type="file" id="coverLetterFile" accept=".pdf">
+                        <div id="coverLetterStatus"></div>
+                    </div>
+
+                    <!-- Job Description -->
+                    <div class="form-group">
+                        <label for="jobDescription">Job Description</label>
+                        <textarea 
+                            id="jobDescription" 
+                            class="form-textarea"
+                            placeholder="Paste the complete job description here...
+
+Include:
+- Role responsibilities
+- Required skills
+- Experience requirements
+- Company information"
+                        ></textarea>
+                        <div id="jobDescriptionStatus"></div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="card">
+                    <h3><i class="fas fa-tools"></i> Actions</h3>
+                    <button class="btn btn-primary" id="atsAnalysisBtn" disabled>
+                        <i class="fas fa-chart-line"></i> ATS Analysis
+                    </button>
+                    <button class="btn btn-outline" id="clearChatBtn">
+                        <i class="fas fa-eraser"></i> Clear Chat
+                    </button>
+                </div>
+
+                <!-- Status -->
+                <div class="card">
+                    <h3><i class="fas fa-info-circle"></i> Status</h3>
+                    <div id="overallStatus" class="status-message status-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Upload resume and job description to start
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Interface -->
+            <div class="chat-container">
+                <div class="chat-header">
+                    <h3 id="chatTitle">
+                        <i class="fas fa-comments"></i> Interview Chat
+                    </h3>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message message-ai">
+                        <strong>AI Assistant:</strong> Welcome! Please upload your resume and job description to start the interview practice. I'm here to help you prepare for your next opportunity! 🚀
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="messageInput" placeholder="Type your message..." disabled>
+                    <button class="btn btn-primary" id="sendBtn" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ATS Analysis Modal -->
+    <div id="atsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-chart-line"></i> ATS Analysis Results</h2>
+                <span class="close" id="closeModal">&times;</span>
+            </div>
+            <div id="atsResults">
+                <!-- ATS results will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
