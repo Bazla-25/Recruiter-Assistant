@@ -5,8 +5,8 @@ from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
 from PyPDF2 import PdfReader
 import gradio as gr
 import asyncio
-
-
+from pydantic import BaseModel
+from openai import OpenAI
 
 load_dotenv()  # Load environment variables from .env file
 serper_api_key = os.getenv("SERPER_API_KEY")
@@ -57,29 +57,64 @@ def set_system_prompt(name, summary, linkedin):
     system_prompt += f"With this context, please chat with the user, always staying in character as {name}."
     return system_prompt
 
+def set_evaluator_prompt(name, summary, linkedin):
+    evaluator_prompt = f"You are an expert interviewer evaluating the responses of {name}, \
+    who is acting as an interviewee on their website. Your task is to assess whether {name}'s \
+    responses are professional, engaging, and accurate based on the provided context. \
+    You will provide a boolean evaluation and constructive feedback for improvement. \
+    If you don't know the answer, say so."
+
+    evaluator_prompt += f"\n\n## Summary:\n{summary}\n\n## LinkedIn Profile:\n{linkedin}\n\n"
+    evaluator_prompt += f"With this context, please evaluate the interviewee's responses."
+    return evaluator_prompt
+
+
+def evaluator_user_prompt(reply, message, history):
+    user_prompt = f"Here's the conversation between the User and the Agent: \n\n{history}\n\n"
+    user_prompt += f"Here's the latest message from the User: \n\n{message}\n\n"
+    user_prompt += f"Here's the latest response from the Agent: \n\n{reply}\n\n"
+    user_prompt += "Please evaluate the response, replying with whether it is acceptable and your feedback."
+    return user_prompt
+
 name = "Ed Donner"  # Replace with the interviewee's name
 summary = read_summary()  # Read the summary from the file
 linkedin = read_pdf(r"D:\UdemyCourse_github\My-work-onThisCourse\agents_bee\web-chatbot\resources\linkedin.pdf")  # Read the LinkedIn profile from the PDF
 system_prompt = set_system_prompt(name, summary, linkedin)
+evaluate_prompt = set_evaluator_prompt(name, summary, linkedin)
 az_model_client, client = set_env()
 
+class Evaluation(BaseModel):
+    is_acceptable: bool
+    feedback: str
+
+
+gemini = OpenAI(
+    api_key=os.getenv("gemini_api_key"), 
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+)
+def rerun(reply, message, history, feedback):
+    updated_system_prompt = system_prompt + "\n\n## Previous answer rejected\nYou just tried to reply, but the quality control rejected your reply\n"
+    updated_system_prompt += f"## Your attempted answer:\n{reply}\n\n"
+    updated_system_prompt += f"## Reason for rejection:\n{feedback}\n\n"
+    messages = [{"role": "system", "content": updated_system_prompt}] + history + [{"role": "user", "content": message}]
+    response = openai.chat.completions.create(model="gpt-4o-mini", messages=messages)
+    return response.choices[0].message.content
+
 def chat(message, history):
-    try:
-        messages = [{"role": "system", "content": system_prompt}] + history + [{"role": "user", "content": message}]
-        response = client.chat.completions.create(
-            model=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
-            messages=messages
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        return f"An error occurred: {str(e)}"
+    messages = [{"role": "system", "content": system_prompt}] + history + [{"role": "user", "content": message}]
+    response = client.chat.completions.create(
+        model=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
+        messages=messages
+    )
+    print("Response:", response.choices[0].message.content)
+    messages = [{"role": "system", "content": evaluate_prompt}] + [{"role": "user", "content": evaluator_user_prompt(response, message, history)}]
+    feedback = gemini.beta.chat.completions.parse(model="gemini-2.0-flash", messages=messages, response_format=Evaluation)
+    print("\n Evaluation:", feedback.choices[0].message.parsed)
+    if not feedback.choices[0].message.parsed.is_acceptable:
+        return rerun(response.choices[0].message.content, message, history, feedback.choices[0].message.parsed.feedback)
+    return response.choices[0].message.content
 
-def test_chat():
-    try:
-        response = chat("Hello", [])
-        print(response)
-    except Exception as e:
-        print(f"Error: {e}")
+######################################Gemini Evaluator#########################################
+chat("Hello, can you tell me about your background?", [])
 
-
-gr.ChatInterface(chat, type="messages").queue().launch()
+# gr.ChatInterface(chat, type="messages").queue().launch()
