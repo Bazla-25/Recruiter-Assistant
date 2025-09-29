@@ -269,9 +269,22 @@ def update_job_description(job_desc):
     return "✅ Job description updated!" if job_desc.strip() else "⚠️ Job description cleared"
 
 def switch_mode(new_mode):
-    """Switch between job seeker and HR recruiter modes and reset everything"""
-    app_state.reset()  # Reset all state
+    """Switch between job seeker and HR recruiter modes"""
+    # Store current state
+    previous_resume = app_state.resume_text
+    previous_cover_letter = app_state.cover_letter_text
+    previous_job_description = app_state.job_description
+    previous_candidate_name = app_state.candidate_name
+    
+    # Only reset chat history and mode
+    app_state.chat_history = []
     app_state.current_mode = new_mode
+    
+    # Restore the previous state
+    app_state.resume_text = previous_resume
+    app_state.cover_letter_text = previous_cover_letter
+    app_state.job_description = previous_job_description
+    app_state.candidate_name = previous_candidate_name
     
     if new_mode == "job_seeker":
         return "🔄 Switched to Job Seeker Mode: I'll interview you based on the job description", []
